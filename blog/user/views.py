@@ -5,6 +5,7 @@ from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views import View
+from .tasks import send_auth_code
 
 # Create your views here.
 from tools.sms import YunTongXin
@@ -56,10 +57,5 @@ def sms_view(request):
     # 将验证码存入redis缓存中
     cache.set(cache_key,code,5*60) # 5*60 s
 
-    yuntongxin = YunTongXin(settings.SMS_ACCOUNT_ID, settings.SMS_AUTH_TOKEN, settings.SMS_APP_ID,
-                            settings.SMS_TEMPLATE_ID)
-    res = yuntongxin.run(phone,str(code),expire=5)
-    res = res.json()
-    if res['statusCode'] != '000000':
-        return JsonResponse({'code':304,'error':'手机号输入有误'})
+    send_auth_code.delay(phone,code)
     return JsonResponse({'code':200})
