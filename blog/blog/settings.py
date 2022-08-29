@@ -146,3 +146,21 @@ CORS_ALLOW_HEADERS = (  # 允许外部请求的请求头
     'x-csrftoken',
     'x-requested-with',
 )
+
+# 发送短信验证码的参数--容联云
+SMS_ACCOUNT_ID = '8a216da8827c888b0182a4e667040629'
+SMS_AUTH_TOKEN = 'eaa09b43a0964019952b4f367ffd1e28'
+SMS_APP_ID = '8a216da8827c888b0182a4e668080630'
+SMS_TEMPLATE_ID = '1'
+
+# redis缓存配置
+CACHES = {
+    "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": "redis://127.0.0.1:6379",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                # "PASSWORD":'123456',
+            }
+        }
+}

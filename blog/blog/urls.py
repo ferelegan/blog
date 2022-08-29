@@ -14,16 +14,12 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
-
-from user import views
+from django.urls import path, include
+from user import views as user_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # 测试 cors
-    path('test_cors',views.test_cors),
-    path('test_cors_server',views.test_cors_server),
     # 用户url的处理
-
-
+    path('v1/users', user_views.UserView.as_view()),
+    path('v1/users/',include('user.urls'))
 ]
