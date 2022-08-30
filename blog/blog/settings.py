@@ -164,3 +164,6 @@ CACHES = {
             }
         }
 }
+
+# 生成token的秘钥
+JWT_TOKEN_KEY = '123456'

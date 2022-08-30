@@ -108,7 +108,10 @@ A ny individuals and organizations and not for commercial use, professiona websi
 			dataType:'json',
 			success:function(res){
 				if (res.code == 200){
+					window.localStorage.setItem('blog_token',res.data.token);
+					window.localStorage.setItem('blog_user',res.username);
 					alert('注册成功！')
+					window.location.href = '/login'
 				}
 				else{
 					alert(res.error)

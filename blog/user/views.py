@@ -1,6 +1,9 @@
+import hashlib
 import json
 import random
+import time
 
+import jwt
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
@@ -11,6 +14,12 @@ from .tasks import send_auth_code
 from tools.sms import YunTongXin
 from user.models import UserProfile
 from django.core.cache import cache
+
+# 生成token
+def get_token(username,expire=3600*24)->bytes:
+    exp = time.time()+expire
+    payload = {'username':username,'exp':exp}
+    return jwt.encode(payload=payload,key=settings.JWT_TOKEN_KEY)
 
 class UserView(View):
     def post(self,request):
@@ -31,6 +40,11 @@ class UserView(View):
         password = password_2
         if not username or not password:
             return JsonResponse({'code':302,'error':'用户名或密码不能为空'})
+
+        md5 = hashlib.md5()
+        md5.update(password.encode())
+        password = md5.hexdigest()
+
         # 短信验证码校验
         code = cache.get(f'sms_{phone}')
         print('***********code in views:%s**********'%code)
@@ -44,7 +58,11 @@ class UserView(View):
         except:
             return JsonResponse({'code':304,'error':'用户名已经存在'})
 
-        return JsonResponse({'code':200})
+        # 生成token，保存用户登录状态
+        token = get_token(username) # type:bytes
+        token = token.decode() # type:str
+
+        return JsonResponse({'code':200,'username':username,'data':{'token':token}})
 
 
 def sms_view(request):
