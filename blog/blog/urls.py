@@ -16,10 +16,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from user import views as user_views
+from btoken import views as btoken_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     # 用户url的处理
     path('v1/users', user_views.UserView.as_view()),
+    path('v1/tokens', btoken_views.TokenView.as_view()),
     path('v1/users/',include('user.urls'))
 ]
