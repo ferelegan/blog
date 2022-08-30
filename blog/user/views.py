@@ -22,6 +22,28 @@ def get_token(username,expire=3600*24)->bytes:
     return jwt.encode(payload=payload,key=settings.JWT_TOKEN_KEY)
 
 class UserView(View):
+    def get(self,request,username=None):
+        try:
+            user = UserProfile.objects.get(username=username)
+        except:
+            return JsonResponse({'code': 305, 'error': '查无此人'})
+
+        keys = request.GET.keys()
+        if keys: # 根据查询字符串取属性值，按需获取
+            data = {}
+            for key in keys:
+                if hasattr(user,key): # python的反射，user对象中有key变量所指向的属性，则返回True
+                    data[key] = getattr(user,key) # 返回user对象的key变量所指向的属性值。
+            return JsonResponse({'code':200,'username':username,'data':data})
+        else: #　如果查询字符串为空，则获取所有属性
+            info = user.info
+            sign = user.sign
+            avatar = str(user.avatar) # user.avatar:会直接将图片数据返回，加上str会返回图片路径
+            nickname = user.nickname
+            return JsonResponse({'code': 200, 'username': username, 'data': {
+                'nickname': nickname, 'info': info, 'sign': sign, 'avatar': avatar
+            }})
+
     def post(self,request):
         # 接收前端的数据
         json_str = request.body

@@ -111,7 +111,7 @@ A ny individuals and organizations and not for commercial use, professiona websi
 					window.localStorage.setItem('blog_token',res.data.token);
 					window.localStorage.setItem('blog_user',res.username);
 					alert('注册成功！')
-					window.location.href = '/login'
+					window.location.href = '/'+res.username + '/topics'
 				}
 				else{
 					alert(res.error)
