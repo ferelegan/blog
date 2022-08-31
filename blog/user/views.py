@@ -7,7 +7,10 @@ import jwt
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from django.views import View
+
+from tools.login_dec import login_check
 from .tasks import send_auth_code
 
 # Create your views here.
@@ -32,6 +35,8 @@ class UserView(View):
         if keys: # 根据查询字符串取属性值，按需获取
             data = {}
             for key in keys:
+                if key == 'password':
+                    continue
                 if hasattr(user,key): # python的反射，user对象中有key变量所指向的属性，则返回True
                     data[key] = getattr(user,key) # 返回user对象的key变量所指向的属性值。
             return JsonResponse({'code':200,'username':username,'data':data})
@@ -86,6 +91,19 @@ class UserView(View):
 
         return JsonResponse({'code':200,'username':username,'data':{'token':token}})
 
+    @method_decorator(login_check)
+    def put(self,request,username):
+        json_str = request.body
+        py_obj = json.loads(json_str)
+
+        # 数据入库
+        user = request.myuser
+        user.sign = py_obj['sign']
+        user.info = py_obj['info']
+        user.nickname = py_obj['nickname']
+        user.save()
+
+        return JsonResponse({'code':200,'username':user.username})
 
 def sms_view(request):
     json_str = request.body
