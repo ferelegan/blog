@@ -117,3 +117,12 @@ def sms_view(request):
 
     send_auth_code.delay(phone,code)
     return JsonResponse({'code':200})
+
+@login_check
+def avatar_view(request,username):
+    if request.method != 'POST':
+        return JsonResponse({'code':307,'error':'请求方式错误'})
+    user = request.myuser
+    user.avatar = request.FILES['avatar']
+    user.save()
+    return JsonResponse({'code':200})

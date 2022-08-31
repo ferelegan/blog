@@ -124,8 +124,8 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 
 # 上传文件的配置
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/' # 上传文件的访问路由
+MEDIA_ROOT = os.path.join(BASE_DIR,'media') # 上传文件的存储路径
 
 # CORS 的配置
 CORS_ORIGIN_ALLOW_ALL = True
