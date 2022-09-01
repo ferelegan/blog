@@ -5,30 +5,35 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
+
+from tools.cache_dec import topic_cache
 from tools.login_dec import login_check, get_user_by_request
 
 # Create your views here.
 from topic.models import Topic
 from user.models import UserProfile
 
-# 博客列表页
-def get_topics_res(original_topics,user):
-    topics = []
-    for topic in original_topics:
-        data = {}
-        data['id'] = topic.id
-        data['title'] = topic.title
-        data['category'] = topic.category
-        data['introduce'] = topic.introduce
-        data['created_time'] = topic.created_time
-        data['author'] = user.nickname
-        topics.append(data)
-    res = {'code':200,'data':{}}
-    res['data']['nickname'] = user.nickname
-    res['data']['topics'] = topics
-    return res
+
 
 class TopicView(View):
+    # 博客列表页
+    def get_topics_res(self,original_topics, user):
+        topics = []
+        for topic in original_topics:
+            data = {}
+            data['id'] = topic.id
+            data['title'] = topic.title
+            data['category'] = topic.category
+            data['introduce'] = topic.introduce
+            data['created_time'] = topic.created_time
+            data['author'] = user.nickname
+            topics.append(data)
+        res = {'code': 200, 'data': {}}
+        res['data']['nickname'] = user.nickname
+        res['data']['topics'] = topics
+        return res
+
+    @method_decorator(topic_cache(600))
     def get(self,request,author_id):
         try:
             user = UserProfile.objects.get(username=author_id)
@@ -53,7 +58,7 @@ class TopicView(View):
                 original_topics = Topic.objects.filter(author_id=author_id,limit='public')
 
         # 组织传输的数据格式,写在此函数内，显得函数太过庞大，故封装成函数
-        res = get_topics_res(original_topics,user)
+        res = self.get_topics_res(original_topics,user)
 
         return JsonResponse(res)
 
