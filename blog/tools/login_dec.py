@@ -19,3 +19,16 @@ def login_check(func):
 
         return func(request,*args,**kwargs)
     return warp
+
+def get_user_by_request(request):
+    token = request.META.get('HTTP_AUTHORIZATION')
+    if not token:
+        return None
+    # 校验token
+    try:
+        payload = jwt.decode(token,settings.JWT_TOKEN_KEY)
+    except:
+        return None
+    # 获取登录用户名
+    username = payload['username']
+    return username
