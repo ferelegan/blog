@@ -6,6 +6,9 @@ from tools.login_dec import get_user_by_request
 def topic_cache(expire):
     def _topic_cache(func):
         def wrapper(request,*args,**kwargs):
+            # 判断是否是文章详情页，文章详情页不做缓存
+            if request.GET.get('t_id',None):
+                return func(request,*args,**kwargs)
             # 构造redis键
             ## 判断是否进行权限过滤
             username = get_user_by_request(request) # 获取访问者
