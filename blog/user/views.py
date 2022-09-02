@@ -112,6 +112,7 @@ def sms_view(request):
 
     cache_key = f'sms_{phone}' # redis 中短信验证码的键
     code = random.randint(100000,999999) # 生成短信验证码
+    print(f'***************{code}*****************')
     # 将验证码存入redis缓存中
     cache.set(cache_key,code,5*60) # 5*60 s
 

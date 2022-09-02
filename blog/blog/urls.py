@@ -26,7 +26,9 @@ urlpatterns = [
     path('v1/tokens', btoken_views.TokenView.as_view()),
     path('v1/users/',include('user.urls')),
     # 文章url的处理
-    path('v1/topics/',include('topic.urls'))
+    path('v1/topics/',include('topic.urls')),
+    # 评论url的处理
+    path('v1/messages/',include('message.urls'))
 ]
 
 # 上传文件路由绑定

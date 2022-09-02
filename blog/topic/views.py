@@ -7,6 +7,7 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
 
+from message.models import Message
 from tools.cache_dec import topic_cache
 from tools.login_dec import login_check, get_user_by_request
 
@@ -80,10 +81,106 @@ class TopicView(View):
             res['data']['next_id'] = None
             res['data']['next_title'] = None
         # 第三部分，评论
-        res['data']['message']={}
-        res['data']["messages_count"] = 0
+        res['data']['messages']=[]
+        messages = Message.objects.filter(topic_id = t_id)
+        reply_dict = {} # 存放回复
+        messages_count = 0 # 评论的数量
+        for message in messages:
+            if message.parent_message == 0: # 评论
+                m_dict = {}
+                m_dict['id'] = message.id
+                m_dict['content'] = message.content
+                m_dict['publisher'] = message.publisher.nickname
+                m_dict['publisher_avatar'] = str(message.publisher.avatar)
+                m_dict['reply'] = []
+                m_dict['created_time'] = message.created_time.strftime('%Y-%m-%d %H:%M:%S')
+                res['data']['messages'].append(m_dict)
+                messages_count += 1
+            else: # 回复
+                reply = {} # 存放每一条回复
+                reply_dict.setdefault(message.parent_message,[])
+                reply['msg_id'] = message.id
+                reply['content'] = message.content
+                reply['created_time'] = message.created_time.strftime('%Y-%m-%d %H:%M:%S')
+                reply['publisher'] = message.publisher.nickname
+                reply['publisher_avatar'] = str(message.publisher.avatar)
+                reply_dict[message.parent_message].append(reply)
+        # 进行组合
+        for parent_message in res['data']['messages']:
+            if parent_message['id'] in reply_dict:
+                parent_message['reply'] = reply_dict[parent_message['id']]
+
+        res['data']["messages_count"] = messages_count
 
         return JsonResponse(res)
+
+        # result = {'code': 200, 'data': {}}
+        # result['data']['nickname'] = author.nickname
+        # result['data']['title'] = author_topic.title
+        # result['data']['category'] = author_topic.category
+        # result['data']['content'] = author_topic.content
+        # result['data']['introduce'] = author_topic.introduce
+        # result['data']['author'] = author.nickname
+        # result['data']['created_time'] = author_topic.created_time.strftime('%Y-%m-%d %H:%M:%S')
+        #
+        # # 第二部分
+        #
+        # if is_self:  # 是博主访问自己的博客
+        #     # 获取上一篇文章的对象
+        #     last_topic = Topic.objects.filter(id__lt=author_topic.id, author_id=author.username).last()
+        #     # 获取下一篇文章对象
+        #     next_topic = Topic.objects.filter(id__gt=author_topic.id, author=author).first()
+        # else:
+        #     last_topic = Topic.objects.filter(id__lt=author_topic.id, author_id=author.username,
+        #                                       limit='public').last()
+        #     next_topic = Topic.objects.filter(id__gt=author_topic.id, author=author, limit='public').first()
+        # if last_topic:
+        #     result['data']['last_id'] = last_topic.id
+        #     result['data']['last_title'] = last_topic.title
+        # else:
+        #     result['data']['last_id'] = None
+        #     result['data']['last_title'] = None
+        # if next_topic:
+        #     result['data']['next_id'] = next_topic.id
+        #     result['data']['next_title'] = next_topic.title
+        # else:
+        #     result['data']['next_id'] = None
+        #     result['data']['next_title'] = None
+        #
+        # # 第三部分
+        # all_ms = Message.objects.filter(topic=author_topic).order_by('-created_time')  # 源数据
+        # msg_list = []  # 目标数据
+        # r_dict = {}  # 目标数据的后半部分
+        # msg_count = 0  # 只统计评论数量，不统计回复数量
+        # for msg in all_ms:
+        #     if msg.parent_message:  # 回复
+        #         r_dict.setdefault(msg.parent_message, [])
+        #         r_dict[msg.parent_message].append({
+        #             "publisher": msg.publisher.nickname,
+        #             'publisher_avatar': str(msg.publisher.avatar),
+        #             'created_time': msg.created_time.strftime('%Y-%m-%d %H:%M:%S'),
+        #             'content': msg.content,
+        #             'msg_id': msg.id,
+        #         })
+        #     else:  # 评论
+        #         # publisher = UserProfile.objects.get()
+        #         msg_list.append({
+        #             'id': msg.id,
+        #             'content': msg.content,
+        #             'publisher': msg.publisher.nickname,
+        #             'publisher_avatar': str(msg.publisher.avatar),
+        #             'reply': [],
+        #             'created_time': msg.created_time.strftime('%Y-%m-%d %H:%M:%S'),
+        #         })
+        #         msg_count += 1
+        # # 评论和回复进行关联
+        # for m in msg_list:
+        #     if m['id'] in r_dict:
+        #         m['reply'] = r_dict[m['id']]
+        # result['data']['messages'] = msg_list
+        # result['data']['messages_count'] = msg_count
+        #
+        # return JsonResponse(result)
 
     # 博客列表页及博客详情页
     @method_decorator(topic_cache(600))
@@ -107,7 +204,7 @@ class TopicView(View):
                     return JsonResponse({'code': 405, 'error': '无此博客'})
             else:
                 try:
-                    topic = Topic.objects.get(id=2,author = user,limit='public')
+                    topic = Topic.objects.get(id=t_id,author = user,limit='public')
                 except:
                     return JsonResponse({'code': 405, 'error': '无此博客'})
             res = self.get_topic_res(user, topic,is_self,t_id)
@@ -161,3 +258,4 @@ class TopicView(View):
                              author_id=author_id)
 
         return JsonResponse({'code': 200, 'username': author_id})
+
